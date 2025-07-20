@@ -28,24 +28,22 @@ router.post('/', async (req, res) => {
     
     const db = getDatabase();
     
-    db.run(
-      'INSERT INTO participants (id, metadata) VALUES (?, ?)',
-      [participantId, JSON.stringify(metadata)],
-      function(err) {
-        if (err) {
-          logger.error('Error creating participant:', err);
-          return res.status(500).json({ error: 'Failed to create participant' });
-        }
-        
-        logger.info(`New participant created: ${participantId}`);
-        
-        res.status(201).json({
-          id: participantId,
-          created_at: new Date().toISOString(),
-          metadata
-        });
-      }
-    );
+
+    try {
+      const stmt = db.prepare('INSERT INTO participants (id, metadata) VALUES (?, ?)');
+      const result = stmt.run(participantId, JSON.stringify(metadata));
+      
+      logger.info(`New participant created: ${participantId}`);
+      
+      res.status(201).json({
+        id: participantId,
+        created_at: new Date().toISOString(),
+        metadata
+      });
+    } catch (dbErr) {
+      logger.error('Error creating participant:', dbErr);
+      return res.status(500).json({ error: 'Failed to create participant' });
+    }
   } catch (error) {
     logger.error('Error in participant creation:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -63,29 +61,26 @@ router.get('/:id', async (req, res) => {
     
     const db = getDatabase();
     
-    db.get(
-      'SELECT * FROM participants WHERE id = ?',
-      [id],
-      (err, row) => {
-        if (err) {
-          logger.error('Error fetching participant:', err);
-          return res.status(500).json({ error: 'Failed to fetch participant' });
-        }
-        
-        if (!row) {
-          return res.status(404).json({ error: 'Participant not found' });
-        }
-        
-        // Parse metadata JSON
-        try {
-          row.metadata = JSON.parse(row.metadata);
-        } catch (e) {
-          row.metadata = {};
-        }
-        
-        res.json(row);
+    try {
+      const stmt = db.prepare('SELECT * FROM participants WHERE id = ?');
+      const row = stmt.get(id);
+      
+      if (!row) {
+        return res.status(404).json({ error: 'Participant not found' });
       }
-    );
+      
+      // Parse metadata JSON
+      try {
+        row.metadata = JSON.parse(row.metadata);
+      } catch (e) {
+        row.metadata = {};
+      }
+      
+      res.json(row);
+    } catch (dbErr) {
+      logger.error('Error fetching participant:', dbErr);
+      return res.status(500).json({ error: 'Failed to fetch participant' });
+    }
   } catch (error) {
     logger.error('Error in participant retrieval:', error);
     res.status(500).json({ error: 'Internal server error' });

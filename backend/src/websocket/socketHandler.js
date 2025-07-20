@@ -62,13 +62,24 @@ function startOrResetChapterTimer(io, chapterId) {
 }
 
 function emitRegistrationStatus(io, chapterId, participantId, socket) {
-  // For demo: use in-memory or mock data. In production, fetch from DB or CHAPTER.
-  // Here, we just send a static example. Replace with real logic as needed.
+  // Use actual chapter state data
+  const state = chapterRegistrationState[chapterId];
+  if (!state) {
+    socket.emit('registration_status', {
+      count: 0,
+      min_participants: 2,
+      max_participants: 6,
+      timer: 0,
+      user_state: 'not_registered',
+    });
+    return;
+  }
+  
   const status = {
-    count: 3, // Replace with real count
-    min_participants: 2, // Replace with real config
-    max_participants: 6, // Replace with real config
-    timer: 15, // Replace with real timer value
+    count: state.participants.length,
+    min_participants: state.min,
+    max_participants: state.max,
+    timer: state.timer,
     user_state: socket.user_state || 'not_registered',
   };
   socket.emit('registration_status', status);
@@ -96,17 +107,15 @@ function setupWebSocket(io) {
           connectedAt: new Date()
         });
         
-        // Update participant's last_seen in database
+        // Create or update participant in database
         const db = getDatabase();
-        db.run(
-          'UPDATE participants SET last_seen = CURRENT_TIMESTAMP WHERE id = ?',
-          [participantId],
-          (err) => {
-            if (err) {
-              logger.warn('Failed to update participant last_seen:', err);
-            }
-          }
-        );
+        try {
+          const stmt = db.prepare(`INSERT OR REPLACE INTO participants (id, last_seen, metadata) 
+           VALUES (?, CURRENT_TIMESTAMP, ?)`);
+          stmt.run(participantId, JSON.stringify(metadata));
+        } catch (err) {
+          logger.warn('Failed to create/update participant:', err);
+        }
         
         // Initialize chapter state if needed
         if (!chapterRegistrationState[chapterId]) {
@@ -131,8 +140,9 @@ function setupWebSocket(io) {
           state.participants.push(participantId);
         }
         state.deregistered.delete(participantId);
-        // Join chapter room for registration updates
+        // Join both chapter and participant rooms
         socket.join(`chapter:${chapterId}`);
+        socket.join(`participant:${participantId}`);
         // Timer logic
         if (state.participants.length >= state.min && state.participants.length < state.max && !state.sessionActive) {
           startOrResetChapterTimer(io, chapterId);

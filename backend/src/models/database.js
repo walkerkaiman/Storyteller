@@ -35,7 +35,7 @@ async function initDatabase() {
     dbInstance = new Database(dbPath);
     logger.info('Connected to SQLite database');
     dbInstance.pragma('foreign_keys = ON');
-    await createTables();
+    createTables();
     logger.info('Database tables created successfully');
     initialized = true;
   } catch (error) {
@@ -45,7 +45,7 @@ async function initDatabase() {
 }
 
 // Create database tables
-async function createTables() {
+function createTables() {
   const tables = [
     // Participants table
     `CREATE TABLE IF NOT EXISTS participants (
