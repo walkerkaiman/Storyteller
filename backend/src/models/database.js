@@ -18,20 +18,26 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-let db;
+// --- SINGLETON DATABASE CONNECTION ---
+// This module ensures only one database instance exists per process.
+// Usage:
+//   await initDatabase();
+//   const db = getDatabase();
+let dbInstance = null;
+let initialized = false;
 
-// Initialize database connection and tables
 async function initDatabase() {
+  if (initialized) {
+    logger.warn('Database already initialized.');
+    return;
+  }
   try {
-    db = new Database(dbPath);
+    dbInstance = new Database(dbPath);
     logger.info('Connected to SQLite database');
-    
-    // Enable foreign keys
-    db.pragma('foreign_keys = ON');
-    
-    // Create tables
+    dbInstance.pragma('foreign_keys = ON');
     await createTables();
     logger.info('Database tables created successfully');
+    initialized = true;
   } catch (error) {
     logger.error('Error initializing database:', error);
     throw error;
@@ -84,7 +90,7 @@ async function createTables() {
   
   for (const sql of tables) {
     try {
-      db.exec(sql);
+      dbInstance.exec(sql);
     } catch (error) {
       logger.error('Error creating table:', error);
       throw error;
@@ -94,18 +100,20 @@ async function createTables() {
 
 // Get database instance
 function getDatabase() {
-  if (!db) {
+  if (!initialized || !dbInstance) {
     throw new Error('Database not initialized. Call initDatabase() first.');
   }
-  return db;
+  return dbInstance;
 }
 
 // Close database connection
 function closeDatabase() {
-  if (db) {
+  if (dbInstance) {
     try {
-      db.close();
+      dbInstance.close();
       logger.info('Database connection closed');
+      dbInstance = null;
+      initialized = false;
     } catch (error) {
       logger.error('Error closing database:', error);
       throw error;
