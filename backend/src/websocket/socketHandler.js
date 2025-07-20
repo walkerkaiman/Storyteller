@@ -120,6 +120,9 @@ function setupWebSocket(io) {
             sessionActive: false,
             sessionFinished: false,
             deregistered: new Set(),
+            lastHeartbeat: Date.now(),
+            status: 'online',
+            heartbeatTimeout: null,
           };
         }
         const state = chapterRegistrationState[chapterId];
@@ -216,6 +219,34 @@ function setupWebSocket(io) {
             }
           }
         );
+        
+        // Initialize or update chapter state
+        if (!chapterRegistrationState[chapterId]) {
+          chapterRegistrationState[chapterId] = {
+            participants: [],
+            min: 2,
+            max: 6,
+            countdownSeconds: 30,
+            timer: 0,
+            timerInterval: null,
+            sessionActive: false,
+            sessionFinished: false,
+            deregistered: new Set(),
+            lastHeartbeat: Date.now(),
+            status: 'online',
+            heartbeatTimeout: null,
+          };
+        } else {
+          chapterRegistrationState[chapterId].lastHeartbeat = Date.now();
+          chapterRegistrationState[chapterId].status = 'online';
+        }
+        // Set up heartbeat timeout
+        if (chapterRegistrationState[chapterId].heartbeatTimeout) {
+          clearTimeout(chapterRegistrationState[chapterId].heartbeatTimeout);
+        }
+        chapterRegistrationState[chapterId].heartbeatTimeout = setTimeout(() => {
+          chapterRegistrationState[chapterId].status = 'offline';
+        }, 10000); // 10 seconds
         
         // Join chapter room
         socket.join(`chapter:${chapterId}`);
@@ -432,7 +463,18 @@ function setupWebSocket(io) {
     });
     
     // Handle heartbeat
-    socket.on('heartbeat', () => {
+    socket.on('heartbeat', (data) => {
+      const { chapterId } = data || {};
+      if (chapterId && chapterRegistrationState[chapterId]) {
+        chapterRegistrationState[chapterId].lastHeartbeat = Date.now();
+        chapterRegistrationState[chapterId].status = 'online';
+        if (chapterRegistrationState[chapterId].heartbeatTimeout) {
+          clearTimeout(chapterRegistrationState[chapterId].heartbeatTimeout);
+        }
+        chapterRegistrationState[chapterId].heartbeatTimeout = setTimeout(() => {
+          chapterRegistrationState[chapterId].status = 'offline';
+        }, 10000); // 10 seconds
+      }
       socket.emit('heartbeat:ack', { timestamp: new Date().toISOString() });
     });
     
@@ -529,6 +571,22 @@ function setupWebSocket(io) {
   };
 }
 
+function getChapterMonitorState() {
+  // Return a summary of all CHAPTERS and their state
+  return Object.entries(chapterRegistrationState).map(([chapterId, state]) => ({
+    chapterId,
+    participants: state.participants,
+    min: state.min,
+    max: state.max,
+    timer: state.timer,
+    sessionActive: state.sessionActive,
+    sessionFinished: state.sessionFinished,
+    lastHeartbeat: state.lastHeartbeat || null,
+    status: state.status || 'offline',
+    deregistered: Array.from(state.deregistered || []),
+  }));
+}
+
 // Helper function to log interactions
 async function logInteraction(participantId, type, payload) {
   return new Promise((resolve, reject) => {
@@ -551,4 +609,4 @@ async function logInteraction(participantId, type, payload) {
   });
 }
 
-module.exports = { setupWebSocket }; 
+module.exports = { setupWebSocket, getChapterMonitorState }; 

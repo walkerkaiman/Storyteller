@@ -5,12 +5,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const basicAuth = require('express-basic-auth');
 require('dotenv').config();
 
 const { logger } = require('./utils/logger');
 const { initDatabase } = require('./models/database');
 const participantRoutes = require('./routes/participants');
 const interactionRoutes = require('./routes/interactions');
+const monitorRoutes = require('./routes/monitor');
 const { setupWebSocket } = require('./websocket/socketHandler');
 
 const app = express();
@@ -36,6 +38,15 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Helper to create basic auth middleware
+function getBasicAuthMiddleware() {
+  return basicAuth({
+    users: { [process.env.DASHBOARD_USER || 'admin']: process.env.DASHBOARD_PASS || 'changeme' },
+    challenge: true,
+    realm: 'MonitorDashboard',
+  });
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -48,6 +59,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/participants', participantRoutes);
 app.use('/api/interactions', interactionRoutes);
+app.use('/api/monitor', getBasicAuthMiddleware(), monitorRoutes);
 
 // WebSocket setup
 setupWebSocket(io);
