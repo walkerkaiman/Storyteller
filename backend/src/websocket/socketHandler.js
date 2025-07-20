@@ -7,6 +7,73 @@ const activeConnections = new Map();
 const activeChapters = new Map();
 const activeConnections_agents = new Map();
 
+// Registration state manager for each CHAPTER
+const chapterRegistrationState = {};
+
+function emitChapterRegistrationStatus(io, chapterId) {
+  const state = chapterRegistrationState[chapterId];
+  if (!state) return;
+  // Emit to all participants in this chapter
+  state.participants.forEach((participantId) => {
+    const user_state = state.sessionActive
+      ? (state.sessionFinished ? 'session_finished' : 'session_started')
+      : (state.deregistered && state.deregistered.has(participantId) ? 'deregistered' : 'pre_session');
+    io.to(`participant:${participantId}`).emit('registration_status', {
+      count: state.participants.length,
+      min_participants: state.min,
+      max_participants: state.max,
+      timer: state.timer,
+      user_state,
+    });
+  });
+}
+
+function startOrResetChapterTimer(io, chapterId) {
+  const state = chapterRegistrationState[chapterId];
+  if (!state) return;
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+  }
+  state.timer = state.countdownSeconds;
+  state.sessionActive = false;
+  state.sessionFinished = false;
+  emitChapterRegistrationStatus(io, chapterId);
+  state.timerInterval = setInterval(() => {
+    if (state.timer > 0 && state.participants.length < state.max) {
+      state.timer--;
+      emitChapterRegistrationStatus(io, chapterId);
+    } else {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+      // Registration closes, session starts
+      state.sessionActive = true;
+      state.timer = 0;
+      emitChapterRegistrationStatus(io, chapterId);
+      io.to(`chapter:${chapterId}`).emit('session_started', { participants: state.participants });
+      // Simulate session finish after 30 seconds
+      setTimeout(() => {
+        state.sessionActive = false;
+        state.sessionFinished = true;
+        emitChapterRegistrationStatus(io, chapterId);
+        io.to(`chapter:${chapterId}`).emit('session_finished', { participants: state.participants });
+      }, 30000);
+    }
+  }, 1000);
+}
+
+function emitRegistrationStatus(io, chapterId, participantId, socket) {
+  // For demo: use in-memory or mock data. In production, fetch from DB or CHAPTER.
+  // Here, we just send a static example. Replace with real logic as needed.
+  const status = {
+    count: 3, // Replace with real count
+    min_participants: 2, // Replace with real config
+    max_participants: 6, // Replace with real config
+    timer: 15, // Replace with real timer value
+    user_state: socket.user_state || 'not_registered',
+  };
+  socket.emit('registration_status', status);
+}
+
 function setupWebSocket(io) {
   io.on('connection', (socket) => {
     logger.info(`New WebSocket connection: ${socket.id}`);
@@ -14,10 +81,10 @@ function setupWebSocket(io) {
     // Handle participant connections
     socket.on('participant:join', async (data) => {
       try {
-        const { participantId, metadata = {} } = data;
+        const { participantId, chapterId, metadata = {} } = data;
         
-        if (!participantId) {
-          socket.emit('error', { message: 'Participant ID is required' });
+        if (!participantId || !chapterId) {
+          socket.emit('error', { message: 'Participant ID and Chapter ID are required' });
           return;
         }
         
@@ -41,29 +108,79 @@ function setupWebSocket(io) {
           }
         );
         
-        // Join participant room for targeted messages
-        socket.join(`participant:${participantId}`);
-        
-        // Log participant join interaction
-        logInteraction(participantId, 'system_event', {
-          event: 'participant_join',
-          socketId: socket.id,
-          metadata
-        });
-        
-        // Broadcast to all chapters and connections
-        socket.broadcast.emit('participant:joined', {
-          participantId,
-          socketId: socket.id,
-          timestamp: new Date().toISOString()
-        });
-        
-        logger.info(`Participant joined: ${participantId}`);
-        socket.emit('participant:joined', { participantId, socketId: socket.id });
+        // Initialize chapter state if needed
+        if (!chapterRegistrationState[chapterId]) {
+          chapterRegistrationState[chapterId] = {
+            participants: [],
+            min: 2, // TODO: fetch from config or DB
+            max: 6, // TODO: fetch from config or DB
+            countdownSeconds: 30, // TODO: fetch from config or DB
+            timer: 0,
+            timerInterval: null,
+            sessionActive: false,
+            sessionFinished: false,
+            deregistered: new Set(),
+          };
+        }
+        const state = chapterRegistrationState[chapterId];
+        // Add participant if not already present
+        if (!state.participants.includes(participantId)) {
+          state.participants.push(participantId);
+        }
+        state.deregistered.delete(participantId);
+        // Join chapter room for registration updates
+        socket.join(`chapter:${chapterId}`);
+        // Timer logic
+        if (state.participants.length >= state.min && state.participants.length < state.max && !state.sessionActive) {
+          startOrResetChapterTimer(io, chapterId);
+        }
+        if (state.participants.length === state.max && !state.sessionActive) {
+          if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+          }
+          state.timer = 0;
+          state.sessionActive = true;
+          emitChapterRegistrationStatus(io, chapterId);
+          io.to(`chapter:${chapterId}`).emit('session_started', { participants: state.participants });
+          // Simulate session finish after 30 seconds
+          setTimeout(() => {
+            state.sessionActive = false;
+            state.sessionFinished = true;
+            emitChapterRegistrationStatus(io, chapterId);
+            io.to(`chapter:${chapterId}`).emit('session_finished', { participants: state.participants });
+          }, 30000);
+        }
+        emitChapterRegistrationStatus(io, chapterId);
+        socket.user_state = 'pre_session';
+        emitRegistrationStatus(io, chapterId, participantId, socket);
         
       } catch (error) {
         logger.error('Error in participant join:', error);
         socket.emit('error', { message: 'Failed to join participant' });
+      }
+    });
+    
+    // Handle participant deregistration
+    socket.on('participant:deregister', async (data) => {
+      try {
+        const { participantId, chapterId } = data;
+        if (!participantId || !chapterId) {
+          socket.emit('error', { message: 'Participant ID and Chapter ID are required for deregistration' });
+          return;
+        }
+        const state = chapterRegistrationState[chapterId];
+        if (state) {
+          state.deregistered.add(participantId);
+          state.participants = state.participants.filter(id => id !== participantId);
+          emitChapterRegistrationStatus(io, chapterId);
+        }
+        socket.user_state = 'deregistered';
+        emitRegistrationStatus(io, chapterId, participantId, socket);
+        logger.info(`Participant deregistered: ${participantId}`);
+      } catch (error) {
+        logger.error('Error in participant deregistration:', error);
+        socket.emit('error', { message: 'Failed to deregister participant' });
       }
     });
     

@@ -62,6 +62,7 @@ async function createTables() {
       type TEXT NOT NULL,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
       payload TEXT DEFAULT '{}',
+      result TEXT DEFAULT NULL,
       FOREIGN KEY (participant_id) REFERENCES participants (id) ON DELETE CASCADE
     )`,
     
