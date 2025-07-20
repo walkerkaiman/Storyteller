@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 
 // You may want to set this to your backend's actual WebSocket URL
-const SOCKET_URL = process.env.VITE_BACKEND_WS_URL || 'http://localhost:5000';
+const SOCKET_URL = process.env.VITE_BACKEND_WS_URL || 'http://localhost:3000';
 
 let socketInstance = null;
 
@@ -20,8 +20,12 @@ export function useRegistrationStatus(chapterId) {
     socketInstance = socket;
 
     socket.on('connect', () => {
-      // Optionally emit a join event for the chapter
-      socket.emit('join_chapter', { chapterId });
+      // Register as a participant for this chapter
+      socket.emit('participant:join', { 
+        participantId: localStorage.getItem('participantId') || 'anonymous', 
+        chapterId,
+        metadata: { userAgent: navigator.userAgent, timestamp: Date.now() }
+      });
     });
 
     socket.on('registration_status', (data) => {
