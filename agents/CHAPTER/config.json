@@ -1,9 +1,0 @@
-{
-  "chapter_id": "CHAPTER_001",
-  "backend_url": "http://localhost:3000/api",
-  "black_box_command": "python black_box.py",
-  "qr_camera_index": 0,
-  "min_participants": 2,
-  "max_participants": 6,
-  "countdown_seconds": 30
-} 

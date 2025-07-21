@@ -2,10 +2,10 @@
 
 ## Overview
 This project is a modular, real-time interactive system for live installations, featuring:
-- Backend (Node.js/Express + WebSocket)
+- Backend (Node.js/Express + WebSocket) serving both frontends
 - CHAPTER nodes (Raspberry Pi or similar)
-- PORTAL (Participant UI, React)
-- MONITORING DASHBOARD (Admin UI, React)
+- PORTAL (Participant UI, React) - served at root
+- MONITORING DASHBOARD (Admin UI, React) - served at /dashboard
 
 ---
 
@@ -14,8 +14,9 @@ This project is a modular, real-time interactive system for live installations, 
 - QR code check-in for participants
 - CHAPTER-to-backend and backend-to-PORTAL communication
 - Monitoring dashboard for live CHAPTER status, participant counts, timers, and heartbeat
-- HTTP Basic Auth protection for monitoring endpoints
-- Unified launcher script for backend and dashboard
+- HTTP Basic Auth protection for monitoring dashboard and API
+- Unified launcher script - everything runs on port 3000
+- Database-driven CHAPTER management with names, locations, and metadata
 
 ---
 
@@ -32,13 +33,30 @@ cd ../frontend && npm install
 ```sh
 python main.py
 ```
-- This will start the backend, the dashboard UI, and open the dashboard in your browser.
+- This will build the frontend, start the backend, and open the dashboard in your browser.
+- Everything runs on a single port (3000) for easy deployment.
 
-### 3. Access the Monitoring Dashboard
-- Open [http://localhost:5173](http://localhost:5173) in your browser.
-- You will be prompted for a username and password (HTTP Basic Auth):
+### 3. Access the Interfaces
+- **PORTAL (Participant Interface)**: [http://localhost:3000](http://localhost:3000) - No authentication required
+- **DASHBOARD (Admin Interface)**: [http://localhost:3000/dashboard](http://localhost:3000/dashboard) - Requires authentication:
   - **Username:** `admin` (default, or set with `DASHBOARD_USER` env variable)
-  - **Password:** `changeme` (default, or set with `DASHBOARD_PASS` env variable)
+  - **Password:** `1234` (default, or set with `DASHBOARD_PASS` env variable)
+
+### 4. Network Access for Other Devices
+For smartphones, tablets, and other devices on your local network:
+- **Find your local IP**: The launcher will show your local IP address (e.g., `192.168.1.100`)
+- **PORTAL for devices**: `http://YOUR_LOCAL_IP:3000` (e.g., `http://192.168.1.100:3000`)
+- **DASHBOARD for admin**: `http://YOUR_LOCAL_IP:3000/dashboard`
+- **Requirements**: All devices must be on the same WiFi network
+
+---
+
+## Dashboard Features
+- **Summary Cards**: Total CHAPTERS, online count, active sessions, total participants
+- **CHAPTER Management**: Add new CHAPTERS with names and locations
+- **Real-time Status**: Live participant counts, timers, session states, heartbeat monitoring
+- **Database Integration**: Persistent CHAPTER information with metadata
+- **Enhanced Organization**: CHAPTER names, locations, and detailed status information
 
 ---
 
@@ -51,18 +69,11 @@ python main.py
 
 ---
 
-## Monitoring Dashboard Features
-- Lists all CHAPTERS with:
-  - ID, status (online/offline), participant count, timer, session state, last heartbeat
-- Auto-refreshes every 2 seconds
-- Easy to extend for more details or drill-downs
-
----
-
 ## Customization
 - Change dashboard credentials with environment variables:
   - `DASHBOARD_USER` and `DASHBOARD_PASS`
 - Adjust dashboard polling interval or add WebSocket for real-time updates
+- Modify CHAPTER metadata for additional custom fields
 
 ---
 

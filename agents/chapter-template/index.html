@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAPTER Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .status-bar {
+            background: #f5f5f5;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .form-container {
+            padding: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .form-section h3 {
+            color: #1976d2;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #1976d2;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1565c0;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .qr-section {
+            text-align: center;
+            padding: 2rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 1rem auto;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📖 CHAPTER</h1>
+            <p>Interactive Story Chapter Configuration</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting to backend...</span>
+            </div>
+            <div>
+                <strong>ID:</strong> <span id="agentId">Loading...</span>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <div id="alertContainer"></div>
+
+            <form id="configForm">
+                <div class="form-section">
+                    <h3>📋 Basic Information</h3>
+                    <div class="form-group">
+                        <label for="name">Chapter Name *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">Location</label>
+                            <input type="text" id="location" name="location">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <input type="text" id="description" name="description">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🌐 Network Configuration</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ip">IP Address</label>
+                            <input type="text" id="ip" name="ip" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="port">Port</label>
+                            <input type="number" id="port" name="port" value="8080">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="backendUrl">Backend URL</label>
+                        <input type="url" id="backendUrl" name="backendUrl" placeholder="http://192.168.1.100:3000">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>👥 Participant Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="minParticipants">Minimum Participants</label>
+                            <input type="number" id="minParticipants" name="minParticipants" min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="maxParticipants">Maximum Participants</label>
+                            <input type="number" id="maxParticipants" name="maxParticipants" min="1" value="10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="countdown">Countdown Timer (seconds)</label>
+                        <input type="number" id="countdown" name="countdown" min="30" max="300" value="60">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🔧 QR Scanner Settings</h3>
+                    <div class="form-group">
+                        <label for="cameraDevice">Camera Device</label>
+                        <select id="cameraDevice" name="cameraDevice">
+                            <option value="0">Default Camera</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="scanInterval">Scan Interval (ms)</label>
+                        <input type="number" id="scanInterval" name="scanInterval" min="100" max="2000" value="500">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadConfig()">🔄 Refresh</button>
+                    <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Backend</button>
+                    <button type="button" class="btn btn-secondary" onclick="registerWithBackend()">📝 Register with Backend</button>
+                    <button type="button" class="btn btn-danger" onclick="resetConfig()">🔄 Reset to Defaults</button>
+                </div>
+            </form>
+
+            <div class="qr-section">
+                <h3>📱 QR Code Scanner</h3>
+                <div class="qr-code" id="qrCode">
+                    <div>
+                        <div>📷</div>
+                        <div>Camera not active</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="toggleQRScanner()">Start QR Scanner</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let config = {};
+        let qrScannerActive = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            updateStatus();
+            setInterval(updateStatus, 5000);
+        });
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                config = await response.json();
+                populateForm(config);
+                showAlert('Configuration loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading config:', error);
+                showAlert('Failed to load configuration', 'error');
+            }
+        }
+
+        function populateForm(config) {
+            Object.keys(config).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = config[key];
+                }
+            });
+            
+            // Set agent ID
+            document.getElementById('agentId').textContent = config.id || 'Not registered';
+        }
+
+        async function saveConfig() {
+            const formData = new FormData(document.getElementById('configForm'));
+            const configData = {};
+            
+            for (let [key, value] of formData.entries()) {
+                configData[key] = value;
+            }
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(configData)
+                });
+
+                if (response.ok) {
+                    config = configData;
+                    showAlert('Configuration saved successfully', 'success');
+                    
+                    // Register with backend if URL is provided
+                    if (configData.backendUrl) {
+                        await registerWithBackendFromConfig(configData);
+                    }
+                } else {
+                    throw new Error('Failed to save configuration');
+                }
+            } catch (error) {
+                console.error('Error saving config:', error);
+                showAlert('Failed to save configuration', 'error');
+            }
+        }
+
+        async function registerWithBackend() {
+            try {
+                const backendUrl = document.getElementById('backendUrl').value;
+                if (!backendUrl) {
+                    showAlert('Please enter a backend URL first', 'error');
+                    return;
+                }
+
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ backendUrl })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Successfully registered with backend', 'success');
+                } else {
+                    throw new Error(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Error registering with backend:', error);
+                showAlert('Failed to register with backend: ' + error.message, 'error');
+            }
+        }
+
+        async function registerWithBackendFromConfig(configData) {
+            try {
+                const registrationData = {
+                    id: configData.id || generateId(),
+                    name: configData.name,
+                    type: 'chapter',
+                    location: configData.location,
+                    description: configData.description,
+                    ip: configData.ip,
+                    port: configData.port,
+                    minParticipants: parseInt(configData.minParticipants),
+                    maxParticipants: parseInt(configData.maxParticipants),
+                    countdown: parseInt(configData.countdown)
+                };
+
+                const response = await fetch(`${configData.backendUrl}/api/discovery/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+
+                if (response.ok) {
+                    showAlert('Successfully registered with backend', 'success');
+                } else {
+                    throw new Error('Registration failed');
+                }
+            } catch (error) {
+                console.error('Error registering with backend:', error);
+                showAlert('Failed to register with backend', 'error');
+            }
+        }
+
+        async function testConnection() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            if (!backendUrl) {
+                showAlert('Please enter a backend URL first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${backendUrl}/api/monitor/chapters`);
+                if (response.ok) {
+                    showAlert('Backend connection successful', 'success');
+                } else {
+                    throw new Error('Backend not responding');
+                }
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                showAlert('Backend connection failed', 'error');
+            }
+        }
+
+        function resetConfig() {
+            if (confirm('Are you sure you want to reset all configuration to defaults?')) {
+                const defaultConfig = {
+                    name: 'New Chapter',
+                    location: '',
+                    description: '',
+                    port: '8080',
+                    backendUrl: '',
+                    minParticipants: '1',
+                    maxParticipants: '10',
+                    countdown: '60',
+                    cameraDevice: '0',
+                    scanInterval: '500'
+                };
+                
+                populateForm(defaultConfig);
+                showAlert('Configuration reset to defaults', 'success');
+            }
+        }
+
+        function toggleQRScanner() {
+            qrScannerActive = !qrScannerActive;
+            const button = document.querySelector('.qr-section button');
+            const qrCode = document.getElementById('qrCode');
+            
+            if (qrScannerActive) {
+                button.textContent = 'Stop QR Scanner';
+                qrCode.innerHTML = '<div>🔍<br>Scanning...</div>';
+                // Here you would start the actual QR scanner
+            } else {
+                button.textContent = 'Start QR Scanner';
+                qrCode.innerHTML = '<div>📷<br>Camera not active</div>';
+                // Here you would stop the QR scanner
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                
+                if (status.online) {
+                    statusDot.classList.remove('offline');
+                    statusText.textContent = 'Online - Connected to backend';
+                } else {
+                    statusDot.classList.add('offline');
+                    statusText.textContent = 'Offline - No backend connection';
+                }
+            } catch (error) {
+                document.getElementById('statusDot').classList.add('offline');
+                document.getElementById('statusText').textContent = 'Offline - Connection error';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function generateId() {
+            return 'chapter_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Form submission
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveConfig();
+        });
+
+        // Get local IP address
+        async function getLocalIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                document.getElementById('ip').value = data.ip;
+            } catch (error) {
+                document.getElementById('ip').value = '127.0.0.1';
+            }
+        }
+
+        // Initialize IP address
+        getLocalIP();
+    </script>
+</body>
+</html> 

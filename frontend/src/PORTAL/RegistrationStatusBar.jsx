@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRegistrationStatus } from '../services/socketRegistration';
+import { useRegistrationStatus } from './socketRegistration';
 
 const RegistrationStatusBar = ({ chapterId }) => {
   const status = useRegistrationStatus(chapterId);

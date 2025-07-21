@@ -86,6 +86,15 @@ function createTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_heartbeat DATETIME DEFAULT CURRENT_TIMESTAMP,
       metadata TEXT DEFAULT '{}'
+    )`,
+    
+    // System configuration table
+    `CREATE TABLE IF NOT EXISTS system_config (
+      id TEXT PRIMARY KEY,
+      config_type TEXT NOT NULL,
+      config_data TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`
   ];
   

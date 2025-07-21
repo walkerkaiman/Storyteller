@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONNECTION Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #c2185b, #ad1457);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .status-bar {
+            background: #f5f5f5;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .form-container {
+            padding: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .form-section h3 {
+            color: #c2185b;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #c2185b;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: #c2185b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ad1457;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .device-section {
+            text-align: center;
+            padding: 2rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .device-status {
+            width: 200px;
+            height: 200px;
+            margin: 1rem auto;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .connection-test {
+            background: #fff3e0;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        .connection-test h4 {
+            color: #f57c00;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔌 CONNECTION</h1>
+            <p>Microcontroller Device Connection Configuration</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting to backend...</span>
+            </div>
+            <div>
+                <strong>ID:</strong> <span id="agentId">Loading...</span>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <div id="alertContainer"></div>
+
+            <form id="configForm">
+                <div class="form-section">
+                    <h3>📋 Basic Information</h3>
+                    <div class="form-group">
+                        <label for="name">Connection Name *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="connectionType">Connection Type *</label>
+                            <select id="connectionType" name="connectionType" required>
+                                <option value="">Select Type</option>
+                                <option value="serial">Serial (USB/RS232)</option>
+                                <option value="wifi">WiFi (ESP32/ESP8266)</option>
+                                <option value="bluetooth">Bluetooth</option>
+                                <option value="ethernet">Ethernet</option>
+                                <option value="custom">Custom Protocol</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="deviceType">Device Type</label>
+                            <input type="text" id="deviceType" name="deviceType" placeholder="e.g., ESP32, Arduino, Raspberry Pi">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="3" placeholder="Describe the device and its purpose"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🌐 Network Configuration</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ip">IP Address</label>
+                            <input type="text" id="ip" name="ip" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="port">Port</label>
+                            <input type="number" id="port" name="port" value="8080">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="backendUrl">Backend URL</label>
+                        <input type="url" id="backendUrl" name="backendUrl" placeholder="http://192.168.1.100:3000">
+                    </div>
+                </div>
+
+                <div class="form-section" id="serialSection">
+                    <h3>🔌 Serial Connection Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="serialPort">Serial Port</label>
+                            <select id="serialPort" name="serialPort">
+                                <option value="">Auto-detect</option>
+                                <option value="COM1">COM1</option>
+                                <option value="COM2">COM2</option>
+                                <option value="COM3">COM3</option>
+                                <option value="/dev/ttyUSB0">/dev/ttyUSB0</option>
+                                <option value="/dev/ttyACM0">/dev/ttyACM0</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="baudRate">Baud Rate</label>
+                            <select id="baudRate" name="baudRate">
+                                <option value="9600">9600</option>
+                                <option value="19200">19200</option>
+                                <option value="38400">38400</option>
+                                <option value="57600">57600</option>
+                                <option value="115200" selected>115200</option>
+                                <option value="230400">230400</option>
+                                <option value="460800">460800</option>
+                                <option value="921600">921600</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="dataBits">Data Bits</label>
+                            <select id="dataBits" name="dataBits">
+                                <option value="7">7</option>
+                                <option value="8" selected>8</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="parity">Parity</label>
+                            <select id="parity" name="parity">
+                                <option value="none" selected>None</option>
+                                <option value="even">Even</option>
+                                <option value="odd">Odd</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="stopBits">Stop Bits</label>
+                        <select id="stopBits" name="stopBits">
+                            <option value="1" selected>1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section" id="wifiSection">
+                    <h3>📶 WiFi Connection Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="wifiSSID">WiFi SSID</label>
+                            <input type="text" id="wifiSSID" name="wifiSSID" placeholder="Your WiFi network name">
+                        </div>
+                        <div class="form-group">
+                            <label for="wifiPassword">WiFi Password</label>
+                            <input type="password" id="wifiPassword" name="wifiPassword" placeholder="Your WiFi password">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="deviceIP">Device IP Address</label>
+                            <input type="text" id="deviceIP" name="deviceIP" placeholder="192.168.1.100">
+                        </div>
+                        <div class="form-group">
+                            <label for="devicePort">Device Port</label>
+                            <input type="number" id="devicePort" name="devicePort" value="80">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>⚙️ Communication Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="timeout">Connection Timeout (ms)</label>
+                            <input type="number" id="timeout" name="timeout" min="1000" max="30000" value="5000">
+                        </div>
+                        <div class="form-group">
+                            <label for="retryAttempts">Retry Attempts</label>
+                            <input type="number" id="retryAttempts" name="retryAttempts" min="1" max="10" value="3">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="heartbeatInterval">Heartbeat Interval (ms)</label>
+                        <input type="number" id="heartbeatInterval" name="heartbeatInterval" min="1000" max="60000" value="10000">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📊 Data Protocol</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="protocol">Protocol Type</label>
+                            <select id="protocol" name="protocol">
+                                <option value="json">JSON</option>
+                                <option value="csv">CSV</option>
+                                <option value="custom">Custom</option>
+                                <option value="binary">Binary</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="encoding">Encoding</label>
+                            <select id="encoding" name="encoding">
+                                <option value="utf8" selected>UTF-8</option>
+                                <option value="ascii">ASCII</option>
+                                <option value="latin1">Latin-1</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="customProtocol">Custom Protocol Format</label>
+                        <textarea id="customProtocol" name="customProtocol" rows="3" placeholder="Define custom protocol format (e.g., START|DATA|END)"></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadConfig()">🔄 Refresh</button>
+                    <button type="button" class="btn btn-secondary" onclick="testConnection()">🔗 Test Connection</button>
+                    <button type="button" class="btn btn-secondary" onclick="scanDevices()">🔍 Scan Devices</button>
+                    <button type="button" class="btn btn-secondary" onclick="registerWithBackend()">📝 Register with Backend</button>
+                    <button type="button" class="btn btn-danger" onclick="resetConfig()">🔄 Reset to Defaults</button>
+                </div>
+            </form>
+
+            <div class="device-section">
+                <h3>🔌 Device Connection Status</h3>
+                <div class="device-status" id="deviceStatus">
+                    <div>
+                        <div>🔌</div>
+                        <div>No device connected</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="toggleConnection()">Connect to Device</button>
+                
+                <div class="connection-test">
+                    <h4>Connection Test Results</h4>
+                    <div id="testResults">No tests run yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let config = {};
+        let deviceConnected = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            updateStatus();
+            setInterval(updateStatus, 5000);
+            setupConnectionTypeHandlers();
+        });
+
+        function setupConnectionTypeHandlers() {
+            const connectionType = document.getElementById('connectionType');
+            const serialSection = document.getElementById('serialSection');
+            const wifiSection = document.getElementById('wifiSection');
+
+            connectionType.addEventListener('change', function() {
+                serialSection.style.display = this.value === 'serial' ? 'block' : 'none';
+                wifiSection.style.display = this.value === 'wifi' ? 'block' : 'none';
+            });
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                config = await response.json();
+                populateForm(config);
+                showAlert('Configuration loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading config:', error);
+                showAlert('Failed to load configuration', 'error');
+            }
+        }
+
+        function populateForm(config) {
+            Object.keys(config).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = config[key];
+                }
+            });
+            
+            // Set agent ID
+            document.getElementById('agentId').textContent = config.id || 'Not registered';
+            
+            // Trigger connection type change to show/hide sections
+            const connectionType = document.getElementById('connectionType');
+            if (connectionType.value) {
+                connectionType.dispatchEvent(new Event('change'));
+            }
+        }
+
+        async function saveConfig() {
+            const formData = new FormData(document.getElementById('configForm'));
+            const configData = {};
+            
+            for (let [key, value] of formData.entries()) {
+                configData[key] = value;
+            }
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(configData)
+                });
+
+                if (response.ok) {
+                    config = configData;
+                    showAlert('Configuration saved successfully', 'success');
+                    
+                    // Register with backend if URL is provided
+                    if (configData.backendUrl) {
+                        await registerWithBackendFromConfig(configData);
+                    }
+                } else {
+                    throw new Error('Failed to save configuration');
+                }
+            } catch (error) {
+                console.error('Error saving config:', error);
+                showAlert('Failed to save configuration', 'error');
+            }
+        }
+
+        async function registerWithBackend() {
+            try {
+                const backendUrl = document.getElementById('backendUrl').value;
+                if (!backendUrl) {
+                    showAlert('Please enter a backend URL first', 'error');
+                    return;
+                }
+
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ backendUrl })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Successfully registered with backend', 'success');
+                } else {
+                    throw new Error(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Error registering with backend:', error);
+                showAlert('Failed to register with backend: ' + error.message, 'error');
+            }
+        }
+
+        async function registerWithBackendFromConfig(configData) {
+            try {
+                const registrationData = {
+                    id: configData.id || generateId(),
+                    name: configData.name,
+                    type: 'connection',
+                    connectionType: configData.connectionType,
+                    deviceType: configData.deviceType,
+                    location: configData.location,
+                    description: configData.description,
+                    ip: configData.ip,
+                    port: configData.port,
+                    serialPort: configData.serialPort,
+                    baudRate: parseInt(configData.baudRate),
+                    wifiSSID: configData.wifiSSID,
+                    deviceIP: configData.deviceIP,
+                    devicePort: parseInt(configData.devicePort)
+                };
+
+                const response = await fetch(`${configData.backendUrl}/api/discovery/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+
+                if (response.ok) {
+                    showAlert('Successfully registered with backend', 'success');
+                } else {
+                    throw new Error('Registration failed');
+                }
+            } catch (error) {
+                console.error('Error registering with backend:', error);
+                showAlert('Failed to register with backend', 'error');
+            }
+        }
+
+        async function testConnection() {
+            const connectionType = document.getElementById('connectionType').value;
+            const testResults = document.getElementById('testResults');
+            
+            if (!connectionType) {
+                showAlert('Please select a connection type first', 'error');
+                return;
+            }
+
+            testResults.textContent = 'Testing connection...';
+            
+            try {
+                const response = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    testResults.innerHTML = `<span style="color: green;">✅ ${result.message}</span>`;
+                    showAlert('Connection test successful', 'success');
+                } else {
+                    testResults.innerHTML = `<span style="color: red;">❌ ${result.message}</span>`;
+                    showAlert('Connection test failed', 'error');
+                }
+            } catch (error) {
+                testResults.innerHTML = '<span style="color: red;">❌ Connection test failed</span>';
+                showAlert('Connection test failed', 'error');
+            }
+        }
+
+        async function scanDevices() {
+            const testResults = document.getElementById('testResults');
+            testResults.textContent = 'Scanning for devices...';
+            
+            try {
+                const response = await fetch('/api/scan-devices');
+                const devices = await response.json();
+                
+                if (devices.length > 0) {
+                    testResults.innerHTML = `<span style="color: green;">✅ Found ${devices.length} device(s):</span><br>` +
+                        devices.map(d => `• ${d.name} (${d.port})`).join('<br>');
+                } else {
+                    testResults.innerHTML = '<span style="color: orange;">⚠️ No devices found</span>';
+                }
+            } catch (error) {
+                testResults.innerHTML = '<span style="color: red;">❌ Device scan failed</span>';
+            }
+        }
+
+        function toggleConnection() {
+            deviceConnected = !deviceConnected;
+            const button = document.querySelector('.device-section button');
+            const deviceStatus = document.getElementById('deviceStatus');
+            
+            if (deviceConnected) {
+                button.textContent = 'Disconnect from Device';
+                deviceStatus.innerHTML = '<div>🔌<br>Connected</div>';
+                showAlert('Device connected', 'success');
+            } else {
+                button.textContent = 'Connect to Device';
+                deviceStatus.innerHTML = '<div>🔌<br>No device connected</div>';
+                showAlert('Device disconnected', 'success');
+            }
+        }
+
+        function resetConfig() {
+            if (confirm('Are you sure you want to reset all configuration to defaults?')) {
+                const defaultConfig = {
+                    name: 'New Connection',
+                    connectionType: '',
+                    deviceType: '',
+                    description: '',
+                    port: '8080',
+                    backendUrl: '',
+                    serialPort: '',
+                    baudRate: '115200',
+                    dataBits: '8',
+                    parity: 'none',
+                    stopBits: '1',
+                    wifiSSID: '',
+                    wifiPassword: '',
+                    deviceIP: '',
+                    devicePort: '80',
+                    timeout: '5000',
+                    retryAttempts: '3',
+                    heartbeatInterval: '10000',
+                    protocol: 'json',
+                    encoding: 'utf8',
+                    customProtocol: ''
+                };
+                
+                populateForm(defaultConfig);
+                showAlert('Configuration reset to defaults', 'success');
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                
+                if (status.online) {
+                    statusDot.classList.remove('offline');
+                    statusText.textContent = 'Online - Connected to backend';
+                } else {
+                    statusDot.classList.add('offline');
+                    statusText.textContent = 'Offline - No backend connection';
+                }
+            } catch (error) {
+                document.getElementById('statusDot').classList.add('offline');
+                document.getElementById('statusText').textContent = 'Offline - Connection error';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function generateId() {
+            return 'connection_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Form submission
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveConfig();
+        });
+
+        // Get local IP address
+        async function getLocalIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                document.getElementById('ip').value = data.ip;
+            } catch (error) {
+                document.getElementById('ip').value = '127.0.0.1';
+            }
+        }
+
+        // Initialize IP address
+        getLocalIP();
+    </script>
+</body>
+</html> 
