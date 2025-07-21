@@ -310,10 +310,23 @@ class Agent {
     // Start the agent server
     async start() {
         return new Promise((resolve) => {
-            this.server = this.app.listen(this.config.port, () => {
-                console.log(`🚀 ${this.config.type.toUpperCase()} agent running on http://localhost:${this.config.port}`);
-                console.log(`📋 Configuration interface available at http://localhost:${this.config.port}`);
-                console.log(`🌐 Web interface: http://localhost:${this.config.port}`);
+            // Bind to all network interfaces (0.0.0.0)
+            this.server = this.app.listen(this.config.port, '0.0.0.0', () => {
+                console.log(`🚀 ${this.config.type.toUpperCase()} agent running on port ${this.config.port}`);
+                console.log(`📋 Configuration interface available at:`);
+                console.log(`   Local: http://localhost:${this.config.port}`);
+                
+                // Log network interfaces for external access
+                const os = require('os');
+                const networkInterfaces = os.networkInterfaces();
+                
+                Object.keys(networkInterfaces).forEach((interfaceName) => {
+                    networkInterfaces[interfaceName].forEach((interface) => {
+                        if (interface.family === 'IPv4' && !interface.internal) {
+                            console.log(`   Network: http://${interface.address}:${this.config.port}`);
+                        }
+                    });
+                });
                 
                 // Auto-register with backend after a short delay
                 setTimeout(() => {

@@ -17,37 +17,42 @@ function formatDuration(seconds) {
   return `${mins}m ${secs}s`;
 }
 
-export default function MonitorTab({ config }) {
+export default function MonitorTab({ config, isActive }) {
   const [data, setData] = useState({ agents: [], summary: {} });
   const [discoveryStatus, setDiscoveryStatus] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // Fetch data function
+  const fetchData = async () => {
+    try {
+      const [monitorRes, discoveryRes] = await Promise.all([
+        fetch('/api/monitor/chapters'),
+        fetch('/api/discovery/status')
+      ]);
+      const monitorData = await monitorRes.json();
+      const discoveryData = await discoveryRes.json();
+      setData(monitorData);
+      setDiscoveryStatus(discoveryData);
+      setLoading(false);
+    } catch (e) {
+      console.error('Error fetching data:', e);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
-    async function fetchData() {
-      try {
-        const [monitorRes, discoveryRes] = await Promise.all([
-          fetch('/api/monitor/chapters'),
-          fetch('/api/discovery/status')
-        ]);
-        
-        const monitorData = await monitorRes.json();
-        const discoveryData = await discoveryRes.json();
-        
-        if (mounted) {
-          setData(monitorData);
-          setDiscoveryStatus(discoveryData);
-          setLoading(false);
-        }
-      } catch (e) {
-        console.error('Error fetching data:', e);
-        setLoading(false);
-      }
-    }
     fetchData();
     const interval = setInterval(fetchData, 2000);
     return () => { mounted = false; clearInterval(interval); };
   }, []);
+
+  // Robust: Refetch when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      fetchData();
+    }
+  }, [isActive]);
 
   const { agents, summary } = data;
 
@@ -61,21 +66,13 @@ export default function MonitorTab({ config }) {
           gap: '1rem', 
           marginBottom: '2rem' 
         }}>
-          <div style={{ background: '#e3f2fd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1976d2' }}>{summary.total}</div>
-            <div>Total Agents</div>
-          </div>
           <div style={{ background: '#e8f5e8', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2e7d32' }}>{summary.online}</div>
-            <div>Online</div>
+            <div>Total Agents</div>
           </div>
           <div style={{ background: '#fff3e0', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f57c00' }}>{summary.activeSessions}</div>
             <div>Active Sessions</div>
-          </div>
-          <div style={{ background: '#f3e5f5', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#7b1fa2' }}>{summary.totalParticipants}</div>
-            <div>Total Participants</div>
           </div>
           <div style={{ background: '#e0f2f1', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00695c' }}>{summary.chapters}</div>
@@ -85,14 +82,13 @@ export default function MonitorTab({ config }) {
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#c2185b' }}>{summary.connections}</div>
             <div>Connections</div>
           </div>
-          <div style={{ background: '#fafafa', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#666' }}>
-              {discoveryStatus.active ? '🟢' : '🔴'}
-            </div>
-            <div>Auto-Discovery</div>
-            <div style={{ fontSize: '0.8rem', color: '#666' }}>
-              {discoveryStatus.discoveredCount || 0} found
-            </div>
+          <div style={{ background: '#f3e5f5', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#7b1fa2' }}>{summary.totalParticipants}</div>
+            <div>Total Participants</div>
+          </div>
+          <div style={{ background: '#e1bee7', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#6a1b9a' }}>{summary.activeParticipants}</div>
+            <div>Active Participants</div>
           </div>
         </div>
       )}
@@ -232,20 +228,7 @@ export default function MonitorTab({ config }) {
       )}
 
       {/* Auto-Discovery Info */}
-      <div style={{ 
-        background: '#f5f5f5', 
-        padding: '1rem', 
-        borderRadius: '8px', 
-        marginTop: '2rem',
-        fontSize: '0.9rem',
-        color: '#666'
-      }}>
-        <h4>Auto-Discovery Status</h4>
-        <p style={{ margin: '0.5rem 0' }}>
-          The system automatically discovers and registers agents on the network. 
-          Agents can be added manually in the Configure tab or discovered automatically.
-        </p>
-      </div>
+      {/* (Removed) */}
     </div>
   );
 } 

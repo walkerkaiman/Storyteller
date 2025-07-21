@@ -73,11 +73,11 @@ function Dashboard() {
 
       {/* Tab Content */}
       {activeTab === 'monitor' && (
-        <MonitorTab config={config} />
+        <MonitorTab config={config} isActive={activeTab === 'monitor'} />
       )}
       
       {activeTab === 'config' && (
-        <ConfigTab config={config} onConfigUpdate={handleConfigUpdate} />
+        <ConfigTab config={config} onConfigUpdate={handleConfigUpdate} isActive={activeTab === 'config'} />
       )}
     </div>
   );

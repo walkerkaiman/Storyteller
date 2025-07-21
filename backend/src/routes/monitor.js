@@ -1,6 +1,7 @@
 const express = require('express');
 const { getDatabase } = require('../models/database');
 const configService = require('../services/configService');
+const { getActiveConnections } = require('../websocket/socketHandler');
 
 const router = express.Router();
 
@@ -16,13 +17,22 @@ router.get('/chapters', async (req, res) => {
     const chapters = db.prepare('SELECT * FROM chapters ORDER BY name').all();
     const connections = db.prepare('SELECT * FROM connections ORDER BY name').all();
     
-    // Get participant counts for each agent
+    // Calculate the start of today at noon (local time)
+    const now = new Date();
+    const noon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
+    if (now < noon) {
+      // If before noon, use noon of the previous day
+      noon.setDate(noon.getDate() - 1);
+    }
+    const noonIso = noon.toISOString();
+
+    // Get participant counts for each agent since noon
     const participantCounts = db.prepare(`
       SELECT participant_id, COUNT(*) as count 
       FROM interactions 
-      WHERE type = 'registration' 
+      WHERE type = 'registration' AND timestamp >= ?
       GROUP BY participant_id
-    `).all();
+    `).all(noonIso);
     
     // Get recent interactions for session status
     const recentInteractions = db.prepare(`
@@ -95,12 +105,27 @@ router.get('/chapters', async (req, res) => {
       agents.push(agent);
     });
     
+    // Calculate active participants (currently connected via WebSocket)
+    let activeParticipants = 0;
+    try {
+      const active = getActiveConnections();
+      if (active && active.participants) {
+        // Use a Set to ensure uniqueness
+        const uniqueActive = new Set(active.participants.map(p => p.participantId));
+        activeParticipants = uniqueActive.size;
+      }
+    } catch (e) {
+      // Fallback: 0 if not available
+      activeParticipants = 0;
+    }
+    
     // Calculate summary statistics
     const summary = {
       total: agents.length,
       online: agents.filter(a => a.isOnline).length,
       activeSessions: agents.filter(a => a.sessionActive).length,
-      totalParticipants: participantCounts.length,
+      totalParticipants: participantCounts.length, // unique since noon
+      activeParticipants: activeParticipants, // currently interacting
       chapters: agents.filter(a => a.type === 'chapter').length,
       connections: agents.filter(a => a.type === 'connection').length
     };
